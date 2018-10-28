@@ -5,6 +5,7 @@ from urllib.request import urlopen
 # Fix Starts : urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed
 # https://www.python.org/dev/peps/pep-0476/
 # https://github.com/googleapis/google-api-python-client/issues/478
+# https://stackoverflow.com/questions/19699367/unicodedecodeerror-utf-8-codec-cant-decode-byte
 import ssl
 
 try:
@@ -32,7 +33,7 @@ def load_urls_from_file(file_path: str):
 
 def load_page(url: str):
     response = urlopen(url)
-    html = response.read().decode('utf-8')
+    html = response.read().decode("ISO-8859-1")
     return html
 
 
