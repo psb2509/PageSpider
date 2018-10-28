@@ -2,26 +2,41 @@ import re
 import string
 from urllib.request import urlopen
 
+# Fix Starts : urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed
+# https://www.python.org/dev/peps/pep-0476/
+# https://github.com/googleapis/google-api-python-client/issues/478
+import ssl
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    # Legacy Python that doesn't verify HTTPS certificates by default
+    pass
+else:
+    # Handle target environment that doesn't support HTTPS verification
+    ssl._create_default_https_context = _create_unverified_https_context
+# Fix Ends : urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed
+
 from bs4 import BeautifulSoup
 
 
 def load_urls_from_file(file_path: str):
     try:
         with open(file_path) as f:
-            content = f.readline()
+            content = f.readlines()
             return content
     except FileNotFoundError:
-        print("File " + file_path + "not found")
+        print("the file " + file_path + " could not be found")
         exit(2)
 
 
 def load_page(url: str):
     response = urlopen(url)
     html = response.read().decode('utf-8')
-    return
+    return html
 
 
-def scrape_page(page_contents: str, false=None):
+def scrape_page(page_contents: str):
     chicken_noodle = BeautifulSoup(page_contents, "html5lib")
 
     for script in chicken_noodle(["script", "style"]):
@@ -30,6 +45,7 @@ def scrape_page(page_contents: str, false=None):
     text = chicken_noodle.get_text()
     lines = (line.strip() for line in text.splitlines())
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+
     text = ' '.join(chunk for chunk in chunks if chunk)
     plain_text = ''.join(filter(lambda x: x in string.printable, text))
 
@@ -46,7 +62,7 @@ def scrape_page(page_contents: str, false=None):
 
                 # no numbers
             if any(char.isdigit() for char in word):
-                clean = false
+                clean = False
 
                 # at least two characters but no more than 10
             if len(word) < 2 or len(word) > 10:
